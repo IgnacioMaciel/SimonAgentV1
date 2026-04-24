@@ -1,0 +1,8 @@
+node_modules/
+android/build/
+ios/build/
+*.log
+.env
+.DS_Store
+npm-debug.log*
+yarn-error.log*
