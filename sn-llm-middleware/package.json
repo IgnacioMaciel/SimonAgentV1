@@ -1,20 +1,19 @@
 {
-  "name": "sn-llm-middleware",
-  "version": "3.0.0",
-  "description": "Middleware Node.js para Virtual Agent de ServiceNow con RAG on-prem via Ollama.",
-  "main": "src/index.js",
-  "type": "module",
-  "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "openai": "^4.28.0",
-    "node-cache": "^5.1.2",
-    "winston": "^3.11.0",
-    "dotenv": "^16.4.1",
-    "@lancedb/lancedb": "^0.9.0",
-    "apache-arrow": "^17.0.0"
-  }
+    "name": "sn-llm-middleware",
+    "version": "0.0.1",
+    "description": "",
+    "license": "UNLICENSED",
+    "imports": {
+        "#now:*": "./@types/servicenow/fluent/*/index.js"
+    },
+    "scripts": {
+        "build": "now-sdk build",
+        "deploy": "now-sdk install",
+        "transform": "now-sdk transform",
+        "types": "now-sdk dependencies"
+    },
+    "devDependencies": {
+        "@servicenow/sdk": "4.6.0",
+        "@servicenow/glide": "27.0.5"
+    }
 }

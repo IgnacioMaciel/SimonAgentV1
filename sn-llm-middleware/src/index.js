@@ -23,6 +23,7 @@ async function start() {
 
   logger.info(`LLM → ${process.env.LLM_BASE_URL} | model: ${process.env.LLM_MODEL ?? 'llama3.1:8b'}`);
   logger.info(`Embedding model → ${process.env.EMBEDDING_MODEL ?? 'nomic-embed-text'}`);
+  logger.info(`Session TTL → ${process.env.SESSION_TTL_SECONDS ?? '1800'}s | Max history → ${process.env.SESSION_MAX_HISTORY ?? '20'} messages`);
 
   const ready = await indexExists().catch(() => false);
   if (!ready) {
@@ -40,7 +41,7 @@ async function start() {
 
   app.listen(PORT, () => {
     logger.info(`Middleware listening on http://0.0.0.0:${PORT}`);
-    logger.info('Endpoints: POST /nlu/classify | POST /admin/reindex | GET /admin/index-status | GET /health');
+    logger.info('Endpoints: POST /conversation/start | POST /conversation/end | POST /nlu/classify | POST /admin/reindex | GET /health');
   });
 }
 

@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { buildSystemPrompt } from '../prompts/systemPromptBuilder.js';
+import { buildSystemPrompt, buildKBResponsePrompt } from '../prompts/systemPromptBuilder.js';
 import { retrieveContext }   from './ragService.js';
 import { logger }            from '../utils/logger.js';
 
@@ -94,6 +94,37 @@ function extractJSON(raw) {
   return null;
 }
 
+async function generateKBResponse(userMessage, retrievedContext) {
+  const model     = process.env.LLM_MODEL      ?? 'llama3.1:8b';
+  const timeoutMs = parseInt(process.env.LLM_TIMEOUT_MS ?? '30000');
+
+  const prompt = buildKBResponsePrompt({
+    retrievedContext,
+    userQuestion: userMessage,
+  });
+
+  try {
+    const response = await Promise.race([
+      openai.chat.completions.create({
+        model,
+        max_tokens:  1000,  // más tokens para respuestas detalladas
+        temperature: 0.2,   // un poco más de temperatura para respuestas más naturales
+        messages: [
+          { role: 'user', content: prompt },
+        ],
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('LLM_TIMEOUT')), timeoutMs)
+      ),
+    ]);
+
+    return response.choices[0].message.content?.trim() ?? null;
+  } catch (err) {
+    logger.error('[LLM] Error generating KB response:', err.message);
+    return null;
+  }
+}
+
 export async function classifyAndRespond(userMessage, history = []) {
   const startTime = Date.now();
   const model     = process.env.LLM_MODEL      ?? 'llama3.1:8b';
@@ -159,6 +190,19 @@ export async function classifyAndRespond(userMessage, history = []) {
     logger.warn(`[LLM] Low confidence (${parsed.confidence}) for intent "${parsed.intent}"`);
     parsed.intent       = 'low_confidence';
     parsed.bot_response = 'Could you give me more detail? I am not sure I fully understood your request.';
+  }
+
+    if (parsed.intent === 'search_kb' && contextText && contextText !== '(context unavailable)') {
+    logger.info('[LLM] Intent is search_kb — generating detailed KB response...');
+
+    const detailedResponse = await generateKBResponse(userMessage, contextText);
+
+    if (detailedResponse) {
+      parsed.bot_response = detailedResponse;
+      logger.info('[LLM] Detailed KB response generated successfully');
+    } else {
+      logger.warn('[LLM] Could not generate detailed KB response — using short response');
+    }
   }
 
   logger.info({

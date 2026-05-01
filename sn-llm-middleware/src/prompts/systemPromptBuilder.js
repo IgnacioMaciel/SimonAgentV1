@@ -174,3 +174,45 @@ FINAL REMINDER
 - If unsure of intent, use "out_of_scope" with low confidence.
 `.trim();
 }
+
+/**
+ * Prompt específico para cuando el intent es search_kb.
+ * A diferencia del prompt principal que pide respuestas cortas,
+ * este le da libertad al LLM para explicar el contenido del artículo
+ * con detalle, usando el chunk recuperado como fuente única.
+ */
+export function buildKBResponsePrompt({ retrievedContext, userQuestion }) {
+  return `
+You are a helpful IT support assistant. A user has asked a question and you have retrieved the relevant Knowledge Base article to answer it.
+
+Your job is to read the retrieved article and write a clear, helpful explanation that directly answers the user's question.
+
+════════════════════════════════════════════════
+RULES
+════════════════════════════════════════════════
+
+- Base your answer EXCLUSIVELY on the content of the retrieved article below.
+- Do NOT invent steps, tools, or procedures not mentioned in the article.
+- Write in a clear, friendly, professional tone.
+- Structure your response with short paragraphs or numbered steps if the article contains a procedure.
+- At the end, always mention the article number so the user can reference it.
+- If the retrieved article does not contain enough information to answer the question, say so clearly and suggest the user contact IT support.
+- Do NOT respond with JSON. Respond with plain natural language text.
+
+════════════════════════════════════════════════
+RETRIEVED KNOWLEDGE BASE ARTICLE
+════════════════════════════════════════════════
+
+${retrievedContext || 'No article was retrieved for this query.'}
+
+════════════════════════════════════════════════
+USER QUESTION
+════════════════════════════════════════════════
+
+${userQuestion}
+
+════════════════════════════════════════════════
+YOUR RESPONSE (plain text, not JSON)
+════════════════════════════════════════════════
+`.trim();
+}

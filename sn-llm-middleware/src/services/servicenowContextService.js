@@ -33,7 +33,7 @@ async function fetchKBArticles() {
     number: r.number,
     title: r.short_description,
     category: r.kb_category?.display_value ?? 'General',
-    summary: (r.text ?? '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 500),
+    summary: (r.text ?? '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 3000),
     sys_id: r.sys_id,
   }));
 }
@@ -87,6 +87,9 @@ export async function getServiceNowContext() {
   let kbArticles = cache.get('kb_articles');
   if (!kbArticles) {
     kbArticles = await fetchKBArticles();
+    kbArticles.forEach(element => {
+      logger.info(`[KB Article] ${element.number} - (${element.summary})`);
+    });
     cache.set('kb_articles', kbArticles, ttlKB);
     logger.info(`[Cache] KB articles loaded: ${kbArticles.length}`);
   }
